@@ -247,9 +247,89 @@ public class BibCreator{
 		
 	}
 
-	private static void processFileNJ(LinkedList<LinkedList<String>> listArticles, int fileNumber) {
+	private static void processFileNJ(LinkedList<LinkedList<String>> listArticles, int fileNumber) throws FileInvalidException, FileNotFoundException {
 		
+		PrintWriter fileWriter =  new PrintWriter(new FileOutputStream("ACM"+fileNumber+".json"));
+		Path path = Paths.get("ACM"+fileNumber+".json");
+		LinkedList<String> st=getStructure(STRUCT_FILE_ACM);
+		if (st==null) {
+			fileWriter.close();
+			throw new FileInvalidException("Could not process ACM struct file, program will terminate!");
+			
+		}
+			
 		
+		String ACMString="";
+		int articleNumber=1;
+		for (LinkedList<String> article : listArticles) {
+			
+			String year="";
+			ACMString=ACMString+"["+articleNumber+"] ";
+			for (String ACMfield : st) {
+				
+				for (String field : article) {
+					
+					
+					if (field.contains(ACMfield)) {
+						
+						
+						switch (field.substring(0, field.indexOf("="))) {
+						case "author":
+							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-2);
+							if (field.contains("and"))
+								ACMString=ACMString.substring(0,ACMString.indexOf("and"))+"et al. ";
+							else
+								ACMString=ACMString+". ";
+							break;
+						case "title":
+							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-2)+". ";
+							break;
+						case "journal":
+							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-2)+". ";
+							break;
+						case "volume":
+							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-2)+", ";
+							break;
+						case "number":
+							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-2)+" ("+year+"), ";
+							break;
+						case "pages":
+							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-2)+". ";
+							break;
+						case "month":
+							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-1)+" ";
+							break;
+						case "year":
+							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-2)+". ";
+							year=field.substring(field.indexOf("=")+1,field.length()-2);
+							break;
+						case "doi":
+							ACMString=ACMString+"DOI:https://doi.org/"+field.substring(field.indexOf("=")+1,field.length()-2)+".";
+							break;
+						default:
+							break;
+						}
+						
+					}
+					
+					
+				}
+				
+				
+				
+			
+			}
+			articleNumber++;	
+			year="";
+			ACMString=ACMString+"\n\n";
+		}
+		 // file exists and it is not a directory
+		  if(validateFile(path)) {
+		      fileWriter.append(ACMString);
+		  }else {
+			  fileWriter.write(ACMString);
+		  }
+		  fileWriter.close();
 	}
 
 	private static void processFileEEE(LinkedList<LinkedList<String>> listArticles, int fileNumber) throws FileNotFoundException, FileInvalidException {
