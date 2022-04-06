@@ -249,9 +249,9 @@ public class BibCreator{
 
 	private static void processFileNJ(LinkedList<LinkedList<String>> listArticles, int fileNumber) throws FileInvalidException, FileNotFoundException {
 		
-		PrintWriter fileWriter =  new PrintWriter(new FileOutputStream("ACM"+fileNumber+".json"));
-		Path path = Paths.get("ACM"+fileNumber+".json");
-		LinkedList<String> st=getStructure(STRUCT_FILE_ACM);
+		PrintWriter fileWriter =  new PrintWriter(new FileOutputStream("NJ"+fileNumber+".json"));
+		Path path = Paths.get("NJ"+fileNumber+".json");
+		LinkedList<String> st=getStructure(STRUCT_FILE_NJ);
 		if (st==null) {
 			fileWriter.close();
 			throw new FileInvalidException("Could not process ACM struct file, program will terminate!");
@@ -259,12 +259,12 @@ public class BibCreator{
 		}
 			
 		
-		String ACMString="";
-		int articleNumber=1;
+		String NJString="";
+		
 		for (LinkedList<String> article : listArticles) {
 			
 			String year="";
-			ACMString=ACMString+"["+articleNumber+"] ";
+			
 			for (String ACMfield : st) {
 				
 				for (String field : article) {
@@ -275,36 +275,35 @@ public class BibCreator{
 						
 						switch (field.substring(0, field.indexOf("="))) {
 						case "author":
-							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-2);
+							NJString=NJString+field.substring(field.indexOf("=")+1,field.length()-2)+". ";
 							if (field.contains("and"))
-								ACMString=ACMString.substring(0,ACMString.indexOf("and"))+"et al. ";
+								NJString=NJString.replace("and", "&");
 							else
-								ACMString=ACMString+". ";
+								NJString=NJString+". ";
 							break;
 						case "title":
-							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-2)+". ";
+							NJString=NJString+field.substring(field.indexOf("=")+1,field.length()-2)+". ";
 							break;
 						case "journal":
-							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-2)+". ";
+							NJString=NJString+field.substring(field.indexOf("=")+1,field.length()-2)+". ";
 							break;
 						case "volume":
-							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-2)+", ";
+							NJString=NJString+field.substring(field.indexOf("=")+1,field.length()-2)+", ";
 							break;
 						case "number":
-							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-2)+" ("+year+"), ";
+							NJString=NJString+field.substring(field.indexOf("=")+1,field.length()-2);
 							break;
 						case "pages":
-							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-2)+". ";
+							NJString=NJString+field.substring(field.indexOf("=")+1,field.length()-2)+"("+year+").";
 							break;
 						case "month":
-							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-1)+" ";
+							NJString=NJString+field.substring(field.indexOf("=")+1,field.length()-1)+" ";
 							break;
 						case "year":
-							ACMString=ACMString+field.substring(field.indexOf("=")+1,field.length()-2)+". ";
 							year=field.substring(field.indexOf("=")+1,field.length()-2);
 							break;
 						case "doi":
-							ACMString=ACMString+"DOI:https://doi.org/"+field.substring(field.indexOf("=")+1,field.length()-2)+".";
+							NJString=NJString+"DOI:https://doi.org/"+field.substring(field.indexOf("=")+1,field.length()-2)+".";
 							break;
 						default:
 							break;
@@ -319,15 +318,15 @@ public class BibCreator{
 				
 			
 			}
-			articleNumber++;	
+			
 			year="";
-			ACMString=ACMString+"\n\n";
+			NJString=NJString+"\n\n";
 		}
 		 // file exists and it is not a directory
 		  if(validateFile(path)) {
-		      fileWriter.append(ACMString);
+		      fileWriter.append(NJString);
 		  }else {
-			  fileWriter.write(ACMString);
+			  fileWriter.write(NJString);
 		  }
 		  fileWriter.close();
 	}
