@@ -1,18 +1,43 @@
+/**
+ * 
+ * Student names: Jaina Manik, Aldo Medrano
+ * Student numbers: 2111628, 2032115
+ * Date: 18-04-2022
+ * 
+ * Description of the project:
+ * The following projects executes the data process of bib files in order to get output files
+ * according to the IEEE, ACM, and NJ standards. 
+ * 
+ * The initial process is to validate the structure of the fields for each standard which are defined in three structure files.
+ * Each file defines the order the fields values to be written in the output files.
+ * 
+ * Such files are:
+ * IEEEStruct.txt
+ * ACMStruct.txt
+ * NJStruct.txt
+ * 
+ * After the validation of the fields order (validateFiles) and their structure, the application validates the findings of empty fields 
+ * It searches for empty fields on every article section.
+ * 
+ * If the validation is successful the application  to create the fields based on the guidelines IEEE, ACM and NJ.
+ * 
+ * After files creation, the program asks to the user to review any of the files created.
+ * 
+ */
+
 package baseClasses;
 
-import java.io.BufferedWriter;
-import java.io.Closeable;
-import java.io.FileDescriptor;
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 
@@ -20,6 +45,9 @@ import exceptionClass.FileInvalidException;
 
 public class BibCreator{
 
+	/**
+	 * Declaration of the structures files  
+	 */
 	static final String STRUCT_FILE_IEEE="IEEEStruct.txt";
 	static final String STRUCT_FILE_ACM="ACMStruct.txt";
 	static final String STRUCT_FILE_NJ="NJStruct.txt";
@@ -35,7 +63,8 @@ public class BibCreator{
 		String fileExtension=scanner.next();
 		
 		try {
-			processFiles(filename,fileNumber,fileExtension);
+			processFilesForValidation(filename,fileNumber,fileExtension);
+			reviewFile();
 		} catch (FileInvalidException e) {
 			// TODO Auto-generated catch block
 			System.out.println(e.getMessage());
@@ -47,7 +76,63 @@ public class BibCreator{
 		
 	}
 
-	private static void processFiles(String filename, int fileNumber, String fileExtension) throws FileInvalidException {
+	/**
+	 * Reads the user input file name to review its content
+	 */
+	private static void reviewFile() {
+		// TODO Auto-generated method stub
+		Scanner sc = new Scanner(System.in);
+		int tries=1;
+		
+		do {
+			try
+	        {
+				
+	            System.out.print("\n\nPlease enter the name of file you need to review: ");
+	            String nameOfFile = sc.nextLine();
+	            BufferedReader reader1 = new BufferedReader(new FileReader(nameOfFile+".json"));
+	            String str = reader1.readLine();
+	            while(str!=null)
+	            {
+	                System.out.println(str);
+	                str = reader1.readLine();
+	                tries=3;
+	            }
+	        }catch(FileNotFoundException e)
+	        {
+	            System.out.println("Could not open input file. File doesn't exists; possibly it could not be created!");
+	            if (tries==1)
+	            	System.out.println("However, you will be allowed another chance to enter another file name");
+	            else {
+	            	System.out.println("Sorry! I am unable to display your desired files! Program will exit!");
+	            	sc.close();
+	            	System.exit(0);
+	            } 
+					
+				
+	            
+	        } catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			tries++;
+		} while (tries<=2);
+		
+		System.out.println("Goodbye! Hope you enjoyed creating the needed files using Bibcreator");
+		sc.close();
+		
+	}
+
+	/**
+	 * 
+	 * @param filename
+	 * @param fileNumber
+	 * @param fileExtension
+	 * @throws FileInvalidException
+	 * 
+	 * Executes the validation of the files against a definition of each file structure (IEE, ACM , NJ) defined in different files
+	 */
+	private static void processFilesForValidation(String filename, int fileNumber, String fileExtension) throws FileInvalidException {
 		// TODO Auto-generated method stub
 		Path pathIEEE = Paths.get(STRUCT_FILE_IEEE);
 		Path pathACM = Paths.get(STRUCT_FILE_ACM);
@@ -59,12 +144,22 @@ public class BibCreator{
 		}
 	}
 
+	/**
+	 * 
+	 * @param filename
+	 * @param fileNumber
+	 * @param fileExtension
+	 * 
+	 * Read the files to check if they have empty fields and to create them if they are valid
+	 */
 	private static void readFiles(String filename, int fileNumber,String fileExtension)  {
 		// TODO Auto-generated method stub
 		Scanner readFile = null;
 		LinkedList<String> articles= new LinkedList<String>();
 		LinkedList<LinkedList<String>> listArticles=new LinkedList<LinkedList<String>>();
 		String lineProcessed="";
+		int numErrorFiles=0; 
+		int numSuccesFiles=0;
 		for (int i = 0; i < fileNumber; i++) {
 			
 				try {
@@ -112,15 +207,15 @@ public class BibCreator{
 									throw new FileInvalidException(str,filename,(i+1),fileExtension);
 								}
 								
-								
-								
+																
 							}
 							createFiles(listArticles,(i+1));
 							listArticles=new LinkedList<LinkedList<String>>();
 							lineProcessed="";
-							
+							numSuccesFiles++;
 						} else {
 							
+							numErrorFiles++;
 							throw new FileInvalidException(lineProcessed,filename,(i+1),fileExtension);
 						}
 				} catch (FileNotFoundException e) {
@@ -137,29 +232,42 @@ public class BibCreator{
 						readFile.close();
 						System.out.println(e.getMessage());
 				}
-					
-					
-					
 				
 				
-						
-			
-		
-			//readFile.close();
+					
 		}
+		//Check if there were invalid files to display the message
+		if (numErrorFiles>0) 
+			System.out.println("\nA total of "+numErrorFiles+" were invalid, and could not be processed. All other "+numSuccesFiles+" were created.");
 
 	}
 
-	
-
+	/**
+	 * 
+	 * @param listArticles
+	 * @param fileNumber
+	 * @throws FileNotFoundException
+	 * @throws FileInvalidException
+	 * 
+	 * Create the files according to the json structure
+	 */
 	private static void createFiles(LinkedList<LinkedList<String>> listArticles,int fileNumber) throws FileNotFoundException, FileInvalidException{
-		//Process files IEEE,ACM and NJ based on the file content read from the file
+		//Process files IEEE,ACM and NJ based on the file content read from the file structure
 				processFileEEE(listArticles,fileNumber);
 				processFileACM(listArticles,fileNumber);
 				processFileNJ(listArticles,fileNumber);
 		
 	}
 
+	/**
+	 * 
+	 * @param listArticles
+	 * @param fileNumber
+	 * @throws FileNotFoundException
+	 * @throws FileInvalidException
+	 * 
+	 * Create the ACM file
+	 */
 	private static void processFileACM(LinkedList<LinkedList<String>> listArticles, int fileNumber) throws FileNotFoundException, FileInvalidException{
 		
 		PrintWriter fileWriter =  new PrintWriter(new FileOutputStream("ACM"+fileNumber+".json"));
@@ -170,8 +278,7 @@ public class BibCreator{
 			throw new FileInvalidException("Could not process ACM struct file, program will terminate!");
 			
 		}
-			
-		
+	
 		String ACMString="";
 		int articleNumber=1;
 		for (LinkedList<String> article : listArticles) {
@@ -227,9 +334,6 @@ public class BibCreator{
 					
 					
 				}
-				
-				
-				
 			
 			}
 			articleNumber++;	
@@ -247,6 +351,15 @@ public class BibCreator{
 		
 	}
 
+	/**
+	 * 
+	 * @param listArticles
+	 * @param fileNumber
+	 * @throws FileInvalidException
+	 * @throws FileNotFoundException
+	 * 
+	 * Create the NJ file
+	 */
 	private static void processFileNJ(LinkedList<LinkedList<String>> listArticles, int fileNumber) throws FileInvalidException, FileNotFoundException {
 		
 		PrintWriter fileWriter =  new PrintWriter(new FileOutputStream("NJ"+fileNumber+".json"));
@@ -254,7 +367,7 @@ public class BibCreator{
 		LinkedList<String> st=getStructure(STRUCT_FILE_NJ);
 		if (st==null) {
 			fileWriter.close();
-			throw new FileInvalidException("Could not process ACM struct file, program will terminate!");
+			throw new FileInvalidException("Could not process NJ struct file, program will terminate!");
 			
 		}
 			
@@ -310,12 +423,8 @@ public class BibCreator{
 						}
 						
 					}
-					
-					
+				
 				}
-				
-				
-				
 			
 			}
 			
@@ -331,6 +440,15 @@ public class BibCreator{
 		  fileWriter.close();
 	}
 
+	/**
+	 * 
+	 * @param listArticles
+	 * @param fileNumber
+	 * @throws FileNotFoundException
+	 * @throws FileInvalidException
+	 * 
+	 * Create the IEEE file
+	 */
 	private static void processFileEEE(LinkedList<LinkedList<String>> listArticles, int fileNumber) throws FileNotFoundException, FileInvalidException {
 		
 		PrintWriter fileWriter =  new PrintWriter(new FileOutputStream("IEEE"+fileNumber+".json"));
@@ -381,10 +499,7 @@ public class BibCreator{
 					
 					
 				}
-				
-				
-				
-				
+	
 			}
 			
 			iEEEString=iEEEString+"\n\n";
@@ -399,6 +514,13 @@ public class BibCreator{
 		
 	}
 
+	/**
+	 * 
+	 * @param path
+	 * @return
+	 * 
+	 * Validate if the structure file and directory exist (NJ, IEEE, ACM)
+	 */
 	private static boolean validateFile(Path path) {
 		// TODO Auto-generated method stub
 		if(Files.exists(path) && !Files.isDirectory(path))
@@ -406,6 +528,13 @@ public class BibCreator{
 		return false;
 	}
 
+	/**
+	 * 
+	 * @param fileStructure
+	 * @return
+	 * 
+	 * Reads the structure of the files (ACM,NJ,IEEE) to get the fields to create the output files
+	 */
 	private static LinkedList<String> getStructure(String fileStructure) {
 		// TODO Auto-generated method stub
 		Scanner fileStruct;
@@ -420,9 +549,7 @@ public class BibCreator{
 						itemsStruct.add(str.nextToken());
 							
 						}
-						
-						
-						
+				
 			}			
 			fileStruct.close();
 			return itemsStruct;
@@ -434,6 +561,13 @@ public class BibCreator{
 		
 	}
 
+	/**
+	 * 
+	 * @param readFile
+	 * @return
+	 * 
+	 * Validates empty fields in the input files
+	 */
 	private static String validateEmptyFields(Scanner readFile) {
 		// TODO Auto-generated method stub
 		while (readFile.hasNext()) {
@@ -444,10 +578,6 @@ public class BibCreator{
 		return "";
 	}
 
-	
-
-	
-		
 }
 
 
